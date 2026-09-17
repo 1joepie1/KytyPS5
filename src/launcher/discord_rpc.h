@@ -11,7 +11,17 @@ class DiscordRPC {
 public:
     static void UpdatePresence([[maybe_unused]] const std::string& gameTitle, [[maybe_unused]] const std::string& titleId) {
 #ifdef _WIN32
-        HANDLE hPipe = CreateFileA("\\\\.\\pipe\\discord-ipc-0", GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
+        HANDLE hPipe = INVALID_HANDLE_VALUE;
+
+        // Probeer poorten discord-ipc-0 t/m discord-ipc-9
+        for (int i = 0; i < 10; ++i) {
+            std::string pipePath = "\\\\.\\pipe\\discord-ipc-" + std::to_string(i);
+            hPipe = CreateFileA(pipePath.c_str(), GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
+            if (hPipe != INVALID_HANDLE_VALUE) {
+                break;
+            }
+        }
+
         if (hPipe == INVALID_HANDLE_VALUE) {
             return;
         }
@@ -19,6 +29,7 @@ public:
         DWORD bytesWritten = 0;
 
         // 1. Stuur Discord Handshake (Opcode 0)
+        // TODO: Vervang client_id door het officiële KytyPS5 Discord App ID zodra aangemaakt.
         std::string handshakeJson = "{\"v\":1,\"client_id\":\"123456789012345678\"}";
         uint32_t handshakeOpcode = 0;
         uint32_t handshakeLength = static_cast<uint32_t>(handshakeJson.size());
