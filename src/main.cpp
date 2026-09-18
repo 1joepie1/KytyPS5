@@ -8,6 +8,7 @@
 #include "common/virtualMemory.h"
 #include "emulator.h"
 #include "kytyGitVersion.h"
+#include "launcher/discordRpcConfig.h"
 
 #include <charconv>
 #include <cstdio>
@@ -80,6 +81,7 @@ static void PrintUsage() {
 	::printf("  --redzone                             Protect the guest SysV red zone.\n");
 #endif
 	::printf("  --keymap <Control=Input>              DualSense mapping; may be repeated.\n");
+	::printf("  --discord-rpc                         Show current game as Discord Rich Presence.\n");
 	::printf("  --rd                                  Enable RenderDoc capture.\n");
 }
 
@@ -181,6 +183,11 @@ static bool ParseArgs(int argc, char* argv[], RunOptions& options, bool& show_he
 
 		if (arg == "--profile") {
 			options.config.profiler_enabled = true;
+			continue;
+		}
+
+		if (arg == "--discord-rpc") {
+			Loader::SetDiscordRpcEnabled(true);
 			continue;
 		}
 
@@ -343,8 +350,6 @@ static bool ParseArgs(int argc, char* argv[], RunOptions& options, bool& show_he
 }
 
 int main(int argc, char* argv[]) {
-	DiscordRPC::UpdatePresence("KytyPS5 Emulator", "Booting Game");
-
 	VirtualMemory::Init();
 	InitializeThreads();
 
