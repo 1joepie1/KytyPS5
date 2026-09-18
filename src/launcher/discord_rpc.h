@@ -30,9 +30,28 @@ public:
             return WriteFile(pipe, data, size, &written, NULL) && (written == size);
         };
 
-        // 1. Stuur Discord Handshake (Opcode 0)
-        // TODO: Vervang client_id door het officiële KytyPS5 Discord App ID zodra beschikbaar.
-        std::string handshakeJson = "{\"v\":1,\"client_id\":\"123456789012345678\"}";
+        // Escape characters that would break the JSON payload (quotes, backslashes, control chars)
+        auto jsonEscape = [](const std::string& s) -> std::string {
+            std::string out;
+            out.reserve(s.size());
+            for (char c : s) {
+                switch (c) {
+                    case '"':  out += "\\\""; break;
+                    case '\\': out += "\\\\"; break;
+                    case '\n': out += "\\n";  break;
+                    case '\r': out += "\\r";  break;
+                    case '\t': out += "\\t";  break;
+                    default:   out += c;      break;
+                }
+            }
+            return out;
+        };
+
+        // 1. Send Discord handshake (Opcode 0)
+        // UPDATE CLIENT ID: replace the placeholder below with your real Discord
+        // Application ID from https://discord.com/developers/applications
+        // before this will actually work.
+        std::string handshakeJson = "{\"v\":1,\"client_id\":\"1550565969708064858\"}"; // UPDATE CLIENT ID
         uint32_t handshakeOpcode = 0;
         uint32_t handshakeLength = static_cast<uint32_t>(handshakeJson.size());
 
@@ -43,10 +62,13 @@ public:
             return;
         }
 
-        // 2. Stuur Activity Frame met Process ID (Opcode 1)
+        // 2. Send activity frame with process ID (Opcode 1)
         DWORD pid = GetCurrentProcessId();
+        std::string safeGameTitle = jsonEscape(gameTitle);
+        std::string safeTitleId = jsonEscape(titleId);
+
         std::string activityJson = "{\"cmd\":\"SET_ACTIVITY\",\"args\":{\"pid\":" + std::to_string(pid) +
-                                    ",\"activity\":{\"details\":\"" + gameTitle + "\",\"state\":\"" + titleId + "\"}},\"nonce\":\"1\"}";
+                                    ",\"activity\":{\"details\":\"" + safeGameTitle + "\",\"state\":\"" + safeTitleId + "\"}},\"nonce\":\"1\"}";
         uint32_t frameOpcode = 1;
         uint32_t frameLength = static_cast<uint32_t>(activityJson.size());
 
