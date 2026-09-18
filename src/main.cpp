@@ -1,4 +1,3 @@
-#include "launcher/discord_rpc.h"
 #include "common/common.h"
 #include "common/dateTime.h"
 #include "common/debug.h"
